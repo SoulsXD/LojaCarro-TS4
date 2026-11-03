@@ -9,7 +9,6 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Diz ao GitHub para executar todos os comandos 'run' dentro da subpasta do projeto
     defaults:
       run:
         working-directory: ./TSI4M-LojaCarro-dev
