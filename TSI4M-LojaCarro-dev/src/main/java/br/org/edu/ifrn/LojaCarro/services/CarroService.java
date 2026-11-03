@@ -17,12 +17,11 @@ public class CarroService {
     public CarroRepository carroRepository;
 
     public Carro save(Carro c) {
-        validarModelo(c.getModelo());  // Valida o modelo antes de salvar
+        validarModelo(c.getModelo());
         validarPreco(c.getPreco());
         return carroRepository.save(c);
     }
 
-    // Novo método para deletar por ID
     public void deleteById(Long id) {
         if(id <= 0){
             throw new CarroException("O ID do carro não pode ser negativo. ID fornecido: " + id);
@@ -30,7 +29,6 @@ public class CarroService {
         carroRepository.deleteById(id);
     }
 
-    // Novo método para pesquisar por ID
     public Optional<Carro> findById(Long id) {
         if(id <= 0){
             throw new CarroException("O ID do carro não pode ser negativo. ID fornecido: " + id);
@@ -38,7 +36,6 @@ public class CarroService {
         return carroRepository.findById(id);
     }
 
-    // Novo método para listar todos os carros
     public List<Carro> findAll() {
         return carroRepository.findAll();
     }
@@ -66,7 +63,6 @@ public class CarroService {
         return carro;
     }
 
-    // Método para atualizar (usa o save existente, mas pode ser renomeado se preferir)
     public Carro update(Carro c) {
         if (c.getId() == null) {
             throw new CarroException("O ID do carro para atualização não pode ser nulo.");
@@ -74,12 +70,11 @@ public class CarroService {
         if (!carroRepository.existsById(c.getId())) {
             throw new CarroException("Carro com ID " + c.getId() + " não encontrado para atualização.");
         }
-        validarModelo(c.getModelo());  // Valida o modelo antes de atualizar
+        validarModelo(c.getModelo());
         validarPreco(c.getPreco());
-        return carroRepository.save(c);  // Retorna o carro salvo para feedback
+        return carroRepository.save(c);
     }
 
-    // Validação do modelo
     private void validarModelo(String modelo) {
         if (modelo == null || modelo.trim().isEmpty()) {
             throw new CarroException("O modelo do carro não pode estar vazio.");

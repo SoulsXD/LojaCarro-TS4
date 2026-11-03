@@ -22,6 +22,7 @@ jobs:
 
       - name: Grant execute permission to Maven Wrapper
         run: chmod +x mvnw
+
       - name: Build project
         run: ./mvnw -B clean package -DskipTests
 
