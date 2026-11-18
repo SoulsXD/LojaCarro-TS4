@@ -1,10 +1,10 @@
-
 package br.org.edu.ifrn.LojaCarro.controllers;
 
 import br.org.edu.ifrn.LojaCarro.CarroException;
 import br.org.edu.ifrn.LojaCarro.model.Carro;
 import br.org.edu.ifrn.LojaCarro.services.CarroService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
+@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/carro")
 public class CarroController {
@@ -19,56 +20,113 @@ public class CarroController {
     @Autowired
     private CarroService carroService;
 
-    // Salvar carro (corrigido para POST)
-    @PostMapping("salvar")
-    public ResponseEntity<Carro> salvarCarro(@RequestBody Carro c) {
+    private boolean temPermissaoDeEdicao(String cargo) {
+        return cargo != null && (cargo.equalsIgnoreCase("ADMIN") || cargo.equalsIgnoreCase("ADMINISTRADOR") || cargo.equalsIgnoreCase("VENDEDOR"));
+    }
+
+    @PostMapping
+    public ResponseEntity<?> salvarCarro(
+            @RequestHeader(value = "idUsuario", required = false) Long idUsuario,
+            @RequestHeader(value = "Cargo-Usuario-Logado", required = false) String cargo,
+            @RequestBody Carro c) {
+
+        if (idUsuario == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado.");
+        }
+        if (!temPermissaoDeEdicao(cargo)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Apenas Administradores e Vendedores podem registar carros.");
+        }
+
         Carro savedCarro = carroService.save(c);
         return ResponseEntity.ok(savedCarro);
     }
 
-    // Atualizar carro (por ID)
-    @PutMapping("/{id}")
-    public ResponseEntity<Carro> atualizarCarro(@PathVariable Long id, @RequestBody Carro c) {
-        c.setId(id);  // Define o ID no objeto
+    @PutMapping
+    public ResponseEntity<?> atualizarCarro(
+            @RequestHeader(value = "idUsuario", required = false) Long idUsuario,
+            @RequestHeader(value = "Cargo-Usuario-Logado", required = false) String cargo,
+            @RequestBody Carro c) {
+
+        if (idUsuario == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado.");
+        if (!temPermissaoDeEdicao(cargo)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Sem permissão.");
+
         Carro updatedCarro = carroService.update(c);
         return ResponseEntity.ok(updatedCarro);
     }
 
-    // Deletar carro (por ID)
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletarCarro(@PathVariable Long id) {
+    public ResponseEntity<?> deletarCarro(
+            @RequestHeader(value = "idUsuario", required = false) Long idUsuario,
+            @RequestHeader(value = "Cargo-Usuario-Logado", required = false) String cargo,
+            @PathVariable Long id) {
+
+        if (idUsuario == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado.");
+        if (!temPermissaoDeEdicao(cargo)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Sem permissão.");
+
         carroService.deleteById(id);
         return ResponseEntity.noContent().build();
     }
 
-    // Pesquisar carro por ID
     @GetMapping("/{id}")
-    public ResponseEntity<Carro> pesquisarCarroPorId(@PathVariable Long id) {
+    public ResponseEntity<?> pesquisarCarroPorId(
+            @RequestHeader(value = "idUsuario", required = false) Long idUsuario,
+            @PathVariable Long id) {
+
+        if (idUsuario == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado.");
+
         Optional<Carro> carro = carroService.findById(id);
-        return carro.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        if (carro.isPresent()) {
+            return ResponseEntity.ok(carro.get());
+        }
+        return ResponseEntity.notFound().build();
     }
 
-    // Pesquisar todos os carros
-    @GetMapping("/listarCarros")
-    public ResponseEntity<List<Carro>> pesquisarTodosCarros() {
+    @GetMapping
+    public ResponseEntity<?> pesquisarTodosCarros(
+            @RequestHeader(value = "idUsuario", required = false) Long idUsuario) {
+
+        if (idUsuario == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado.");
+
         List<Carro> carros = carroService.findAll();
         return ResponseEntity.ok(carros);
     }
 
     @PostMapping(value = "/getCarro", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Carro> pesquisarCarroPorModelo(@RequestBody String modelo) {
+    public ResponseEntity<?> pesquisarCarroPorModelo(
+            @RequestHeader(value = "idUsuario", required = false) Long idUsuario,
+            @RequestBody String modelo) {
+
+        if (idUsuario == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado.");
+
         Optional<Carro> carro = carroService.findByModelo(modelo.trim());
-        return carro.map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
+        if (carro.isPresent()) {
+            return ResponseEntity.ok(carro.get());
+        }
+        return ResponseEntity.notFound().build();
     }
 
     @PostMapping(value = "/deleteCarro", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> deletarCarroPorModelo(@RequestBody String modelo) {
+    public ResponseEntity<?> deletarCarroPorModelo(
+            @RequestHeader(value = "idUsuario", required = false) Long idUsuario,
+            @RequestHeader(value = "Cargo-Usuario-Logado", required = false) String cargo,
+            @RequestBody String modelo) {
+
+        if (idUsuario == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado.");
+        if (!temPermissaoDeEdicao(cargo)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Sem permissão.");
+
         Carro carro = carroService.deleteByModelo(modelo.trim());
         return ResponseEntity.ok("Carro deletado: " + carro.getModelo());
     }
 
     @PostMapping(value = "/updateCarro", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Carro> atualizarCarroPorModelo(@RequestBody String payload) {
+    public ResponseEntity<?> atualizarCarroPorModelo(
+            @RequestHeader(value = "idUsuario", required = false) Long idUsuario,
+            @RequestHeader(value = "Cargo-Usuario-Logado", required = false) String cargo,
+            @RequestBody String payload) {
+
+        if (idUsuario == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado.");
+        if (!temPermissaoDeEdicao(cargo)) return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Sem permissão.");
+
         String[] partes = payload.split(",", 2);
         if (partes.length < 2) {
             throw new CarroException("Payload inválido. Use modelo,preco.");
@@ -80,8 +138,13 @@ public class CarroController {
     }
 
     @PostMapping(value = "/teste", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.TEXT_PLAIN_VALUE)
-    public ResponseEntity<String> bomDia(@RequestBody String nome) {
-        return ResponseEntity.ok("Bom dia, " + nome.trim());
+    public ResponseEntity<?> bomDia(
+            @RequestHeader(value = "idUsuario", required = false) Long idUsuario,
+            @RequestBody String nome) {
+
+        if (idUsuario == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Acesso negado.");
+
+        return ResponseEntity.ok("bem vindo, " + nome.trim());
     }
 
     private double parsePreco(String preco) {
