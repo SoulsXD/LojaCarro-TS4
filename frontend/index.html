@@ -1,208 +1,434 @@
 <!DOCTYPE html>
-<html lang="pt-PT">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loja de Carros - Sistema</title>
+    <title>Loja de Carros</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .container { max-width: 900px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); margin-bottom: 20px; }
         fieldset { border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 5px; }
         legend { font-weight: bold; color: #333; }
-        input, select, button { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
+        input, select, button, textarea { padding: 8px; margin: 5px 0; width: 100%; box-sizing: border-box; }
         button { background-color: #28a745; color: white; border: none; cursor: pointer; border-radius: 4px; font-weight: bold;}
         button:hover { background-color: #218838; }
+        button.btn-sec { background-color: #007bff; width: auto; padding: 5px 15px; }
         button.btn-delete { background-color: #dc3545; width: auto; padding: 5px 10px; margin-left: 10px;}
-        button.btn-delete:hover { background-color: #c82333; }
         ul { list-style-type: none; padding: 0; }
         li { background: #f8f9fa; margin: 5px 0; padding: 10px; border: 1px solid #ddd; display: flex; justify-content: space-between; align-items: center;}
-        
         .escondido { display: none !important; }
-        .cabecalho-usuario { background-color: #007bff; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;}
-        .cabecalho-usuario button { background-color: #dc3545; width: auto; }
+        .cabecalho { background-color: #333; color: white; padding: 10px; border-radius: 5px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;}
+        .cabecalho button { width: auto; margin-right: 5px; }
         .secao-titulo { border-bottom: 2px solid #007bff; padding-bottom: 5px; margin-top: 30px; }
+        .linha-form { display: flex; gap: 10px; }
+        .linha-form > div { flex: 1; }
+        .grid-carros { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; }
+        .card-carro { border: 1px solid #ccc; padding: 15px; border-radius: 5px; text-align: center; background: #fff; }
     </style>
 </head>
 <body>
 
-<div class="container" id="telaLogin">
-    <h1 style="text-align: center;">Bem-vindo à Loja de Carros</h1>
-    <fieldset>
-        <legend>Faça o seu Login</legend>
-        <form id="formLogin">
-            <input type="email" id="loginEmail" placeholder="E-mail" required>
-            <input type="password" id="loginSenha" placeholder="Senha" required>
-            <button type="submit" style="background-color: #007bff;">Entrar no Sistema</button>
-        </form>
-    </fieldset>
+<div class="cabecalho">
+    <div>
+        <button class="btn-sec" onclick="mostrarSecao('catalogo')">Catálogo</button>
+        <button class="btn-sec" id="btnMenuLogin" onclick="mostrarSecao('login')">Login</button>
+        <button class="btn-sec" id="btnMenuCadastro" onclick="mostrarSecao('cadastroCliente')">Criar Conta</button>
+        <button class="btn-sec escondido" id="btnMenuPainel" onclick="mostrarSecao('painel')">Painel Administrativo</button>
+    </div>
+    <div id="infoUsuario"></div>
 </div>
 
-<div class="container escondido" id="telaSistema">
-    
-    <div class="cabecalho-usuario">
-        <span id="infoUsuarioLogado"></span>
-        <button onclick="sair()">Sair</button>
+<div class="container" id="telaLogin">
+    <h2 style="text-align: center;">Faça seu Login</h2>
+    <form id="formLogin">
+        <input type="email" id="loginEmail" placeholder="E-mail" required>
+        <input type="password" id="loginSenha" placeholder="Senha" required>
+        <button type="submit">Entrar</button>
+    </form>
+</div>
+
+<div class="container escondido" id="telaCadastroCliente">
+    <h2 style="text-align: center;">Registro de Cliente</h2>
+    <form id="formCadCliente">
+        <input type="text" id="cliNome" placeholder="Nome Completo" required>
+        <input type="email" id="cliEmail" placeholder="E-mail" required>
+        <input type="password" id="cliSenha" placeholder="Senha" required>
+        <button type="submit">Criar Conta</button>
+    </form>
+</div>
+
+<div class="container escondido" id="telaCatalogo">
+    <h2 class="secao-titulo">Veículos Disponíveis</h2>
+    <div class="grid-carros" id="listaCatalogo"></div>
+</div>
+
+<div class="container escondido" id="telaDetalhes">
+    <button class="btn-sec mb-3" onclick="mostrarSecao('catalogo')">Voltar</button>
+    <h2 class="secao-titulo" id="detTitulo"></h2>
+    <div id="detConteudo"></div>
+</div>
+
+<div class="container escondido" id="telaPainel">
+    <button class="btn-delete" onclick="sair()" style="float: right;">Sair do Sistema</button>
+    <h1>Painel de Controle</h1>
+
+    <div id="secaoPainelAdm" class="escondido">
+        <h2 class="secao-titulo">Auditoria (Logs)</h2>
+        <button onclick="carregarLogs()" class="btn-sec">Consultar Logs</button>
+        <ul id="listaLogs"></ul>
     </div>
 
-    <div id="secaoUsuarios">
-        <h2 class="secao-titulo">Gestão de Utilizadores</h2>
-        <fieldset>
-            <legend>Registar Novo Utilizador</legend>
-            <form id="formCadastro">
-                <input type="text" id="nome" placeholder="Nome Completo" required>
-                <input type="email" id="email" placeholder="E-mail" required>
-                <input type="password" id="senha" placeholder="Senha" required>
-                <select id="cargoNovo" required>
-                    <option value="CLIENTE">Cliente</option>
-                    <option value="VENDEDOR">Vendedor</option>
-                    <option value="ADMIN">Administrador</option>
-                </select>
-                <button type="submit">Registar Utilizador</button>
-            </form>
-        </fieldset>
-
-        <button onclick="carregarUsuarios()" style="background-color: #17a2b8; margin-bottom: 15px;">Atualizar Lista de Utilizadores</button>
+    <div id="secaoUsuarios" class="escondido">
+        <h2 class="secao-titulo">Gerenciamento de Usuários</h2>
+        <form id="formCadastro">
+            <div class="linha-form">
+                <div><input type="text" id="nome" placeholder="Nome" required></div>
+                <div><input type="email" id="email" placeholder="E-mail" required></div>
+                <div><input type="password" id="senha" placeholder="Senha" required></div>
+                <div>
+                    <select id="cargoNovo" required>
+                        <option value="CLIENTE">Cliente</option>
+                        <option value="VENDEDOR">Vendedor</option>
+                        <option value="ADMIN">Administrador</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit">Registrar Usuário</button>
+        </form>
+        <button onclick="carregarUsuarios()" class="btn-sec" style="margin-top: 10px;">Atualizar Usuários</button>
         <ul id="listaUsuarios"></ul>
     </div>
 
     <div id="secaoCarros">
-        <h2 class="secao-titulo">Catálogo de Carros</h2>
-        <button onclick="carregarCarros()" style="background-color: #17a2b8; margin-bottom: 15px;">Atualizar Catálogo</button>
-        <ul id="listaCarros"></ul>
+        <h2 class="secao-titulo">Gerenciamento de Carros</h2>
+        <form id="formCadastroCarro">
+            <input type="hidden" id="cId">
+            <div class="linha-form">
+                <div><input type="text" id="cModelo" placeholder="Modelo do Carro" required></div>
+                <div><input type="number" id="cAno" placeholder="Ano Fabricação" required></div>
+                <div><input type="number" step="0.01" id="cPreco" placeholder="Preço (R$)" required></div>
+            </div>
+            <button type="submit" id="btnSalvarCarro">Salvar Carro</button>
+            <button type="button" id="btnCancelarEdicao" class="btn-delete escondido" onclick="cancelarEdicao()">Cancelar Edição</button>
+        </form>
     </div>
-
 </div>
 
 <script>
-    // Ambas as APIs apontam para o mesmo projeto no Spring Boot rodando na 8080
-    const API_USUARIOS = 'http://localhost:8080/usuarios';
-    const API_CARROS = 'http://localhost:8080/carro'; 
+    const API_BASE = 'http://localhost:8080';
     
     let sessaoAtual = null;
+    let carrosGlobal = [];
 
     function getHeaders() {
-        return {
-            'Content-Type': 'application/json',
-            'idUsuario': String(sessaoAtual.id) 
-        };
+        const headers = { 'Content-Type': 'application/json' };
+        if (sessaoAtual) {
+            headers['idUsuario'] = String(sessaoAtual.id);
+            headers['Cargo-Usuario-Logado'] = sessaoAtual.cargo;
+        }
+        return headers;
     }
 
-    document.getElementById('formLogin').addEventListener('submit', async function(event) {
-        event.preventDefault();
+    function mostrarSecao(secao) {
+        document.getElementById('telaLogin').classList.add('escondido');
+        document.getElementById('telaCadastroCliente').classList.add('escondido');
+        document.getElementById('telaCatalogo').classList.add('escondido');
+        document.getElementById('telaDetalhes').classList.add('escondido');
+        document.getElementById('telaPainel').classList.add('escondido');
 
+        if(secao === 'login') document.getElementById('telaLogin').classList.remove('escondido');
+        if(secao === 'cadastroCliente') document.getElementById('telaCadastroCliente').classList.remove('escondido');
+        if(secao === 'detalhes') document.getElementById('telaDetalhes').classList.remove('escondido');
+        
+        if(secao === 'painel') {
+            if(!sessaoAtual || sessaoAtual.cargo === 'CLIENTE') {
+                alert('Acesso restrito. Apenas funcionários.');
+                mostrarSecao('catalogo');
+                return;
+            }
+            document.getElementById('telaPainel').classList.remove('escondido');
+        }
+        
+        if(secao === 'catalogo') {
+            document.getElementById('telaCatalogo').classList.remove('escondido');
+            if(sessaoAtual) carregarCatalogo(); 
+        }
+    }
+
+    function atualizarMenu() {
+        if(sessaoAtual) {
+            document.getElementById('btnMenuLogin').classList.add('escondido');
+            document.getElementById('btnMenuCadastro').classList.add('escondido');
+            document.getElementById('infoUsuario').innerHTML = `Logado: ${sessaoAtual.email} (${sessaoAtual.cargo}) | <button class="btn-delete" onclick="sair()">Sair</button>`;
+            
+            if(sessaoAtual.cargo !== 'CLIENTE') {
+                document.getElementById('btnMenuPainel').classList.remove('escondido');
+            } else {
+                document.getElementById('btnMenuPainel').classList.add('escondido');
+            }
+
+            if(sessaoAtual.cargo === 'ADMIN' || sessaoAtual.cargo === 'ADMINISTRADOR') {
+                document.getElementById('secaoPainelAdm').classList.remove('escondido');
+                document.getElementById('secaoUsuarios').classList.remove('escondido');
+            } else if (sessaoAtual.cargo === 'VENDEDOR') {
+                document.getElementById('secaoPainelAdm').classList.add('escondido');
+                document.getElementById('secaoUsuarios').classList.add('escondido');
+            }
+        } else {
+            document.getElementById('btnMenuLogin').classList.remove('escondido');
+            document.getElementById('btnMenuCadastro').classList.remove('escondido');
+            document.getElementById('btnMenuPainel').classList.add('escondido');
+            document.getElementById('infoUsuario').innerHTML = '';
+        }
+    }
+
+    document.getElementById('formLogin').addEventListener('submit', async function(e) {
+        e.preventDefault();
         const credenciais = {
             email: document.getElementById('loginEmail').value,
             senha: document.getElementById('loginSenha').value
         };
-
         try {
-            const resposta = await fetch(`${API_USUARIOS}/login`, {
+            const resposta = await fetch(`${API_BASE}/usuarios/login`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(credenciais)
             });
-
             if (resposta.ok) {
-                sessaoAtual = await resposta.json(); 
+                const dados = await resposta.json(); 
+                sessaoAtual = dados;
+                sessaoAtual.cargo = dados.cargoNovo || dados.cargo; 
                 
-                document.getElementById('telaLogin').classList.add('escondido');
-                document.getElementById('telaSistema').classList.remove('escondido');
+                atualizarMenu();
+                document.getElementById('formLogin').reset();
                 
-                document.getElementById('infoUsuarioLogado').innerText = `Logado como: ${sessaoAtual.nome} (${sessaoAtual.cargoNovo})`;
-                
-                if (sessaoAtual.cargoNovo === 'CLIENTE') {
-                    document.getElementById('secaoUsuarios').classList.add('escondido');
+                if(sessaoAtual.cargo === 'CLIENTE') {
+                    mostrarSecao('catalogo');
                 } else {
-                    document.getElementById('secaoUsuarios').classList.remove('escondido');
-                    carregarUsuarios(); 
+                    mostrarSecao('painel');
                 }
-
-                carregarCarros();
             } else {
-                const erro = await resposta.text();
-                alert('Erro ao entrar: ' + erro);
+                alert('E-mail ou senha incorretos.');
             }
         } catch (error) {
-            alert('Falha ao conectar com o servidor. Verifique se o backend na porta 8080 está rodando.');
+            alert('Falha ao conectar com o servidor na porta 8080.');
         }
     });
 
     function sair() {
         sessaoAtual = null;
-        document.getElementById('formLogin').reset();
-        document.getElementById('telaSistema').classList.add('escondido');
-        document.getElementById('telaLogin').classList.remove('escondido');
-        document.getElementById('listaUsuarios').innerHTML = '';
-        document.getElementById('listaCarros').innerHTML = '';
+        atualizarMenu();
+        mostrarSecao('login');
+        document.getElementById('listaCatalogo').innerHTML = '';
     }
 
-    async function carregarUsuarios() {
-        if (!sessaoAtual || sessaoAtual.cargoNovo === 'CLIENTE') return; 
-
+    document.getElementById('formCadCliente').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const novoUsuario = {
+            nome: document.getElementById('cliNome').value,
+            email: document.getElementById('cliEmail').value,
+            senha: document.getElementById('cliSenha').value,
+            cargoNovo: 'CLIENTE'
+        };
         try {
-            const resposta = await fetch(API_USUARIOS, { headers: getHeaders() });
-            const usuarios = await resposta.json();
-            const lista = document.getElementById('listaUsuarios');
-            lista.innerHTML = ''; 
-
-            usuarios.forEach(usuario => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span><strong>ID ${usuario.id}:</strong> ${usuario.nome} (${usuario.email}) - <b>${usuario.cargoNovo}</b></span>
-                    <button class="btn-delete" onclick="deletarUsuario(${usuario.id})">Excluir</button>
-                `;
-                lista.appendChild(li);
+            const resposta = await fetch(`${API_BASE}/usuarios`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(novoUsuario)
             });
-        } catch(error) {
-            console.error('Erro ao carregar usuários:', error);
+            if (resposta.ok) {
+                alert('Conta criada com sucesso! Por favor, faça o login.');
+                document.getElementById('formCadCliente').reset();
+                mostrarSecao('login');
+            } else {
+                alert('Erro ao criar conta.');
+            }
+        } catch (error) {
+            alert('Falha de conexão com a API.');
         }
-    }
+    });
 
-    document.getElementById('formCadastro').addEventListener('submit', async function(event) {
-        event.preventDefault();
-
+    document.getElementById('formCadastro').addEventListener('submit', async function(e) {
+        e.preventDefault();
         const novoUsuario = {
             nome: document.getElementById('nome').value,
             email: document.getElementById('email').value,
             senha: document.getElementById('senha').value,
             cargoNovo: document.getElementById('cargoNovo').value
         };
-
-        const resposta = await fetch(API_USUARIOS, {
+        const resposta = await fetch(`${API_BASE}/usuarios`, {
             method: 'POST',
             headers: getHeaders(), 
             body: JSON.stringify(novoUsuario)
         });
-
         if (resposta.ok) {
-            alert('Utilizador registado com sucesso!');
+            alert('Usuário registrado no sistema!');
             document.getElementById('formCadastro').reset(); 
             carregarUsuarios(); 
         } else {
-            const mensagemErro = await resposta.text();
-            alert('Ação Negada:\n' + mensagemErro);
+            alert('Ação Negada.');
         }
     });
 
-    async function deletarUsuario(id) {
-        if (!confirm('Tem a certeza que deseja excluir o utilizador ID ' + id + '?')) return;
-
-        const resposta = await fetch(`${API_USUARIOS}/${id}`, {
-            method: 'DELETE',
-            headers: getHeaders() 
-        });
-
-        if (resposta.ok) {
-            alert('Utilizador excluído com sucesso!');
-            carregarUsuarios();
-        } else {
-            const mensagemErro = await resposta.text();
-            alert('Ação Negada:\n' + mensagemErro);
+    async function carregarUsuarios() {
+        if (!sessaoAtual || (sessaoAtual.cargo !== 'ADMIN' && sessaoAtual.cargo !== 'ADMINISTRADOR')) return; 
+        const resposta = await fetch(`${API_BASE}/usuarios`, { headers: getHeaders() });
+        if(resposta.ok) {
+            const usuarios = await resposta.json();
+            const lista = document.getElementById('listaUsuarios');
+            lista.innerHTML = ''; 
+            usuarios.forEach(u => {
+                let c = u.cargoNovo || u.cargo;
+                lista.innerHTML += `<li>
+                    <span>${u.nome} (${u.email}) - ${c}</span>
+                    <button class="btn-delete" onclick="deletarUsuario(${u.id})">Excluir</button>
+                </li>`;
+            });
         }
     }
 
-    async function carregarCarros() {
-        console.log("Integração com API de Carros na rota /carro pendente.");
+    async function deletarUsuario(id) {
+        if (!confirm('Deseja excluir este usuário do sistema?')) return;
+        const resposta = await fetch(`${API_BASE}/usuarios/${id}`, { method: 'DELETE', headers: getHeaders() });
+        if (resposta.ok) {
+            alert('Usuário excluído.');
+            carregarUsuarios();
+        } else {
+            alert('Erro ao excluir utilizador.');
+        }
+    }
+
+    async function carregarLogs() {
+        const resposta = await fetch(`${API_BASE}/logs`, { headers: getHeaders() });
+        if (resposta.ok) {
+            const logs = await resposta.json();
+            const lista = document.getElementById('listaLogs');
+            lista.innerHTML = '';
+            logs.forEach(log => {
+                lista.innerHTML += `<li>ID Usuário: ${log.idUsuario} | Ação: ${log.acao} | Data: ${log.dataLog}</li>`;
+            });
+        } else {
+            alert("A sua API de logs não está configurada ou você não tem acesso.");
+        }
+    }
+
+    // CRUD DE CARROS
+    document.getElementById('formCadastroCarro').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const id = document.getElementById('cId').value;
+        const carro = {
+            modelo: document.getElementById('cModelo').value,
+            ano: parseInt(document.getElementById('cAno').value),
+            preco: parseFloat(document.getElementById('cPreco').value)
+        };
+
+        let method = 'POST';
+        if (id) {
+            carro.id = id;
+            method = 'PUT'; 
+        }
+
+        try {
+            const resposta = await fetch(`${API_BASE}/carro`, {
+                method: method,
+                headers: getHeaders(),
+                body: JSON.stringify(carro)
+            });
+
+            if (resposta.ok) {
+                alert(id ? 'Carro atualizado!' : 'Carro cadastrado!');
+                cancelarEdicao();
+                carregarCatalogo();
+            } else {
+                const erro = await resposta.text();
+                alert('Erro na validação do backend:\n' + erro);
+            }
+        } catch (error) {
+            alert('Falha crítica de conexão.');
+        }
+    });
+
+    async function carregarCatalogo() {
+        if (!sessaoAtual) return; 
+        const resposta = await fetch(`${API_BASE}/carro`, { headers: getHeaders() });
+        
+        if(resposta.ok) {
+            carrosGlobal = await resposta.json();
+            const gridDisp = document.getElementById('listaCatalogo');
+            gridDisp.innerHTML = '';
+            
+            carrosGlobal.forEach(carro => {
+                const card = `
+                    <div class="card-carro">
+                        <h3>${carro.modelo}</h3>
+                        <p>Ano: ${carro.ano}</p>
+                        <h4 style="color: green;">R$ ${carro.preco}</h4>
+                        <button onclick="verDetalhes(${carro.id})">Detalhes</button>
+                    </div>
+                `;
+                gridDisp.innerHTML += card;
+            });
+        }
+    }
+
+    function verDetalhes(id) {
+        const carro = carrosGlobal.find(c => c.id === id);
+        if(!carro) return;
+
+        document.getElementById('detTitulo').innerText = `${carro.modelo}`;
+        
+        let acoes = '';
+        if(sessaoAtual && (sessaoAtual.cargo === 'ADMIN' || sessaoAtual.cargo === 'ADMINISTRADOR' || sessaoAtual.cargo === 'VENDEDOR')) {
+            acoes = `
+                <button class="btn-sec" style="margin-top: 20px;" onclick="prepararEdicao(${carro.id})">Editar</button>
+                <button class="btn-delete" style="margin-top: 20px;" onclick="deletarCarro(${carro.id})">Excluir</button>`;
+        }
+
+        document.getElementById('detConteudo').innerHTML = `
+            <p><strong>Ano:</strong> ${carro.ano}</p>
+            <p><strong>Preço:</strong> R$ ${carro.preco}</p>
+            ${acoes}
+        `;
+        mostrarSecao('detalhes');
+    }
+
+    function prepararEdicao(id) {
+        const carro = carrosGlobal.find(c => c.id === id);
+        if(!carro) return;
+
+        document.getElementById('cId').value = carro.id;
+        document.getElementById('cModelo').value = carro.modelo;
+        document.getElementById('cAno').value = carro.ano;
+        document.getElementById('cPreco').value = carro.preco;
+        
+        document.getElementById('btnSalvarCarro').innerText = 'Atualizar Carro';
+        document.getElementById('btnCancelarEdicao').classList.remove('escondido');
+        
+        mostrarSecao('painel');
+    }
+
+    function cancelarEdicao() {
+        document.getElementById('formCadastroCarro').reset();
+        document.getElementById('cId').value = '';
+        document.getElementById('btnSalvarCarro').innerText = 'Salvar Carro';
+        document.getElementById('btnCancelarEdicao').classList.add('escondido');
+    }
+
+    async function deletarCarro(id) {
+        if (!confirm('Deseja realmente excluir este veículo do sistema?')) return;
+        try {
+            const resposta = await fetch(`${API_BASE}/carro/${id}`, { method: 'DELETE', headers: getHeaders() });
+            if (resposta.ok) {
+                alert('Veículo excluído com sucesso.');
+                mostrarSecao('catalogo');
+            } else {
+                const erro = await resposta.text();
+                alert('Erro ao excluir carro:\n' + erro);
+            }
+        } catch(e) {
+            alert('Falha de conexão com a API.');
+        }
     }
 </script>
 
